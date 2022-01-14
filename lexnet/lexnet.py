@@ -1,8 +1,8 @@
 import numpy as np 
-from utils import sigmoid, dsigmoid, relu 
-from utils import ms_loss, dms_loss
+from .utils import sigmoid, dsigmoid, relu 
+from .utils import ms_loss, dms_loss
 from tqdm import tqdm
-from utils import accuracy
+from .utils import accuracy
 
 class Net():
     """
