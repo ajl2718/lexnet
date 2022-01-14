@@ -1,6 +1,8 @@
 import numpy as np 
 from utils import sigmoid, dsigmoid, relu 
 from utils import ms_loss, dms_loss
+from tqdm import tqdm
+from utils import accuracy
 
 class Net():
     """
@@ -130,7 +132,7 @@ class Net():
         verbose (bool): print the steps in the training if True
             
         Return:
-        W_best, b_best, loss_best: the optimal parameters and loss function value
+        losses: the time-series of losses throughout training
         """
         # split the data up into num_batches based on batch_size
         num_examples = Y.shape[1]
@@ -139,11 +141,9 @@ class Net():
             
         # for each batch in each epoch
         for epoch in range(num_epochs):
-            if verbose:
-                print(f'Epoch {epoch}')
-            for batch in range(num_batches):
-                if verbose:
-                    print(f'Computing gradient for batch {batch}')
+            pbar = tqdm(range(num_batches))
+            for batch in pbar:
+                pbar.set_description(f"Epoch {epoch}")
                 X_batch, Y_batch = X[:, batch*batch_size:(batch+1)*batch_size], Y[:, batch*batch_size:(batch+1)*batch_size]
                 dWs, dbs = self.backpropagate(X_batch, Y_batch)
                 # update the values of the weights and biases
@@ -155,5 +155,6 @@ class Net():
                 Y_preds = self.predict(X_batch)
                 loss = ms_loss(Y_preds, Y_batch)
                 losses.append(loss)
+            print(f"Training loss: {loss}")
 
-        return self.weights, self.biases, losses
+        return losses
