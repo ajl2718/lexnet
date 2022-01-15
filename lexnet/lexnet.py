@@ -157,4 +157,13 @@ class Net():
                 losses.append(loss)
             print(f"Training loss: {loss}")
 
+        # now make some predictions
+        y_preds = self.predict(X)
+        
+        # calculate the accuracy
+        y_hat = np.argmax(y_preds, axis=0).reshape(-1, 1)
+        y = np.argmax(Y, axis=0).reshape(-1, 1)
+        acc = accuracy(y_hat, y)
+        print(f'Accuracy: {acc}')
+
         return losses
