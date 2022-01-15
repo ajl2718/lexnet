@@ -33,17 +33,9 @@ Y_test = np.concatenate([label_to_onehot(label, 10) for label in y_test], axis=1
 layers = [784, 64, 10]
 activations = [sigmoid, sigmoid, sigmoid]
 net1 = Net(layers, activations)
-num_epochs = 16
+num_epochs = 32
 batch_size = 64
-epsilon = 5e-3
+epsilon = 5e-2
 
 # gradient descent on the neural net
-losses = net1.train(X_train, Y_train, num_epochs, batch_size, epsilon)
-
-# now make some predictions
-y_test_preds = net1.predict(X_test)
-y_hat = np.argmax(y_test_preds, axis=0).reshape(-1, 1)
-y = y_test.reshape(-1, 1)
-
-# test set accuracy
-acc_test = accuracy(y_hat, y)
+losses = net1.train([X_train, X_test], [Y_train, Y_test], num_epochs, batch_size, epsilon)
