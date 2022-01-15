@@ -31,9 +31,8 @@ Y_test = np.concatenate([label_to_onehot(label, 10) for label in y_test], axis=1
 
 # neural network hyper parameters
 layers = [784, 64, 10]
-activations = [sigmoid, sigmoid]
+activations = [sigmoid, sigmoid, sigmoid]
 net1 = Net(layers, activations)
-
 num_epochs = 16
 batch_size = 64
 epsilon = 5e-3
@@ -42,15 +41,9 @@ epsilon = 5e-3
 losses = net1.train(X_train, Y_train, num_epochs, batch_size, epsilon)
 
 # now make some predictions
-y_train_preds = net1.predict(X_train)
 y_test_preds = net1.predict(X_test)
-
-# calculate the training and test set accuracies
-y_hat = np.argmax(y_train_preds, axis=0).reshape(-1, 1)
-y = y_train.reshape(-1, 1)
-acc_train = accuracy(y_hat, y)
-
 y_hat = np.argmax(y_test_preds, axis=0).reshape(-1, 1)
 y = y_test.reshape(-1, 1)
-acc_test = accuracy(y_hat, y)
 
+# test set accuracy
+acc_test = accuracy(y_hat, y)
