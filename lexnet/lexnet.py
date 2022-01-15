@@ -124,8 +124,8 @@ class Net():
         to find optimal values of the parameters of the neural network
             
         Args:
-        X (np.array of shape (num_features, num_examples)): the training examples
-        y (np.array of shape (num_output_features, num_examples)): the training labels
+        X (list of np.array of shape (num_features, num_examples)): the training examples
+        y (list of np.array of shape (num_output_features, num_examples)): the training labels
         num_epochs (int): number of epochs to run algorithm for
         batch_size (int): number of examples to use for approximating gradient 
         epsilon (float): the scaling of the gradient
@@ -134,36 +134,51 @@ class Net():
         Return:
         losses: the time-series of losses throughout training
         """
+        train_losses = []
+        test_losses = []
+        train_accuracies = []
+        test_accuracies = []
+
+        if isinstance(X, list):
+            X_train, X_test = X 
+            Y_train, Y_test = Y
+        else:
+            X_train = X_test = X 
+            Y_train = Y_test = Y 
+
         # split the data up into num_batches based on batch_size
-        num_examples = Y.shape[1]
+        num_examples = Y_train.shape[1]
         num_batches = int(num_examples / batch_size)
-        losses = []
             
         # for each batch in each epoch
         for epoch in range(num_epochs):
             pbar = tqdm(range(num_batches))
             for batch in pbar:
                 pbar.set_description(f"Epoch {epoch}")
-                X_batch, Y_batch = X[:, batch*batch_size:(batch+1)*batch_size], Y[:, batch*batch_size:(batch+1)*batch_size]
+                X_batch, Y_batch = X_train[:, batch*batch_size:(batch+1)*batch_size], Y_train[:, batch*batch_size:(batch+1)*batch_size]
                 dWs, dbs = self.backpropagate(X_batch, Y_batch)
                 # update the values of the weights and biases
                 for n in range(0, len(self.weights)):
                     self.weights[n] = self.weights[n] - epsilon * dWs[n]
                     self.biases[n] = self.biases[n] - epsilon * dbs[n]
-                # calculate the loss
-                # model predictions and loss
-                Y_preds = self.predict(X_batch)
-                loss = ms_loss(Y_preds, Y_batch)
-                losses.append(loss)
-            print(f"Training loss: {loss}")
+            # calculate the loss
+            # model predictions and loss
+            Y_preds = self.predict(X_train)
+            loss = ms_loss(Y_preds, Y_train)
+            y_hat = np.argmax(Y_preds, axis=0).reshape(-1, 1)
+            y = np.argmax(Y_train, axis=0).reshape(-1, 1)
+            train_accuracy = accuracy(y_hat, y)
+            train_accuracies.append(train_accuracy)
+            train_losses.append(loss)
 
-        # now make some predictions
-        y_preds = self.predict(X)
-        
-        # calculate the accuracy
-        y_hat = np.argmax(y_preds, axis=0).reshape(-1, 1)
-        y = np.argmax(Y, axis=0).reshape(-1, 1)
-        acc = accuracy(y_hat, y)
-        print(f'Accuracy: {acc}')
+            Y_preds = self.predict(X_test)
+            loss = ms_loss(Y_preds, Y_test)
+            y_hat = np.argmax(Y_preds, axis=0).reshape(-1, 1)
+            y = np.argmax(Y_test, axis=0).reshape(-1, 1)
+            test_accuracy = accuracy(y_hat, y)
+            train_accuracies.append(train_accuracy)
+            test_losses.append(loss)
+            print(f"Train loss: {train_losses[-1]}\nTest loss: {test_losses[-1]}")
+            print(f"Train accuracy: {train_accuracy}\nTest accuracy: {test_accuracy}")
 
-        return losses
+        return train_losses, test_losses, train_accuracies, test_accuracies

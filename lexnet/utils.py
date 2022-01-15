@@ -37,7 +37,8 @@ def ms_loss(Y, Y_hat):
     C (float): mean squared loss for the true and predicted outputs
     """
     D =  Y - Y_hat 
-    C = 0.5 * np.diag(np.matmul(D.T, D)).mean()
+    #C = 0.5 * np.diag(np.matmul(D.T, D)).mean() # too much memory
+    C = 0.5 * np.sum(D**2, axis=0).mean()
     return C
 
 def dms_loss(Y, Y_hat):
