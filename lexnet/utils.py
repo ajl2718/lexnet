@@ -6,23 +6,72 @@ def sigmoid(x):
     """
     return 1 / (1 + np.exp(-x))
 
+
 def dsigmoid(x):
     """
     Derivative of the sigmoid activation
     """
     return sigmoid(x) * (1 - sigmoid(x))
 
+
 def relu(x):
     """
     Rectified linear unit activation
     """
-    x = np.array(x).reshape(-1, 1)
     result = np.zeros(x.shape)
-    index_pos = np.where(x >= 0)[0]
-    index_neg = np.where(x < 0)[0]
-    result[index_pos, :] = x[index_pos, :]
-    result[index_neg, :] = 0
+    index_pos0, index_pos1 = np.where(x >= 0)
+    index_neg0, index_neg0 = np.where(x < 0)
+    result[index_pos0, index_pos1] = x[index_pos0, index_pos1]
+    result[index_neg0, index_neg1] = 0
     return result
+
+
+def drelu(x):
+    """
+    Derivative of the relu activation
+    """
+    result = np.zeros(x.shape)
+    index_pos0, index_pos1 = np.where(x >= 0)
+    index_neg0, index_neg0 = np.where(x < 0)
+    result[index_pos0, index_pos1] = 1
+    result[index_neg0, index_neg1] = 0
+    return result
+    
+
+def cross_entropy_loss(Y, Y_hat):
+    """
+    Cross-entropy loss of a batch of values
+
+    Args
+    Y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    Y_hat (np.array of shape (num_output_features, num_examples)): 
+        predicted output value array of shape (output_dim, num_samples)
+
+    Returns
+    C (float): mean squared loss for the true and predicted outputs
+    """
+    C = -(Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat)).sum(axis=0).mean()
+    return C
+
+
+def dcross_entropy_loss(Y, Y_hat):
+    """
+    Derivative of the cross-entropy loss with respesct to the 
+    prediction variable
+
+    Args
+    y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    y_hat (np.array of shape (num_output_features, num_examples)): 
+        predicted output value array of shape (output_dim, num_samples)
+
+    Returns
+    dC (np.array): the derivative of the mean squared loss function w.r.t. Y_hat
+    """
+    dC = (Y_hat - Y)
+    return dC
+
 
 def ms_loss(Y, Y_hat):
     """
@@ -30,8 +79,10 @@ def ms_loss(Y, Y_hat):
     batch of values
 
     Args
-    Y (np.array of shape (num_output_features, num_examples)): correct output value one-hot encoded array of shape (output_dim, num_samples)
-    Y_hat (np.array of shape (num_output_features, num_examples)): predicted output value array of shape (output_dim, num_samples)
+    Y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    Y_hat (np.array of shape (num_output_features, num_examples)): 
+        predicted output value array of shape (output_dim, num_samples)
 
     Returns
     C (float): mean squared loss for the true and predicted outputs
@@ -41,19 +92,95 @@ def ms_loss(Y, Y_hat):
     C = 0.5 * np.sum(D**2, axis=0).mean()
     return C
 
+
 def dms_loss(Y, Y_hat):
     """
-    Derivative of the mean-squared loss function
+    Derivative of the mean-squared loss function with respect to 
+    the prediction variable
 
     Args
-    y (np.array of shape (num_output_features, num_examples)): correct output value one-hot encoded array of shape (output_dim, num_samples)
-    y_hat (np.array of shape (num_output_features, num_examples)): predicted output value array of shape (output_dim, num_samples)
+    y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    y_hat (np.array of shape (num_output_features, num_examples)): 
+        predicted output value array of shape (output_dim, num_samples)
 
     Returns
     dC (np.array): the derivative of the mean squared loss function w.r.t. Y_hat
     """
     dC = (Y_hat - Y)
     return dC
+
+
+def delta(Y, A_final, Z_final, activation, dloss):
+    """
+    Calculate the 'error in the output neuron' for mean square loss
+
+    Args:
+    Y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    A_final (np.array of shape (num_output_features, num_examples)): 
+        predicted output values
+    Z_final (np.array of shape (num_output_features, num_examples)):
+        predicted output values (pre activation)
+    activation (function): 
+        the activation function in the final layer of the network
+    dloss (function):
+        the derivative of the loss function of the network
+
+    Returns:
+    delta (np.array of shape (num)output_features, num_examples )): 
+        mean squared loss for the true and predicted outputs
+    """
+
+    delta = dloss(Y, A_final) * activation(Z_final)
+    return delta
+
+
+def delta_final_ms(Y, A_final, Z_final, activation):
+    """
+    Calculate the 'error in the output neuron' for mean square loss
+
+    Args:
+    Y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    A_final (np.array of shape (num_output_features, num_examples)): 
+        predicted output values
+    Z_final (np.array of shape (num_output_features, num_examples)):
+        predicted output values (pre activation)
+    activation (function): 
+        the activation function in the final layer of the network
+
+    Returns:
+    delta (np.array of shape (num)output_features, num_examples )): 
+        mean squared loss for the true and predicted outputs
+    """
+
+    delta = dms_loss(Y, A_final) * activation(Z_final)
+    return delta
+
+
+def delta_final_ce(Y, A_final, Z_final, activation):
+    """
+    Calculate the 'error in the output neuron' for cross-entropy loss
+
+    Args:
+    Y (np.array of shape (num_output_features, num_examples)): 
+        correct output value one-hot encoded array of shape (output_dim, num_samples)
+    A_final (np.array of shape (num_output_features, num_examples)): 
+        predicted output values
+    Z_final (np.array of shape (num_output_features, num_examples)):
+        predicted output values (pre activation)
+    activation (function): 
+        the activation function in the final layer of the network
+
+    Returns:
+    delta (np.array of shape (num)output_features, num_examples )): 
+        mean squared loss for the true and predicted outputs
+    """
+
+    delta = dcross_entropy_loss(Y, A_final) * activation(Z_final)
+    return delta
+
 
 def grad_descent_simple(num_steps, epsilon, x0, f, df):
     """
@@ -78,6 +205,7 @@ def grad_descent_simple(num_steps, epsilon, x0, f, df):
     x_best, f_best, df_best = x1, f(x1), df(x1)
     return x_best, f_best, df_best
 
+
 # convert from the idx format to csv 
 # reference: https://pjreddie.com/projects/mnist-in-csv/
 def convert(imgf, labelf, outf, n):
@@ -101,6 +229,7 @@ def convert(imgf, labelf, outf, n):
     o.close()
     l.close()
 
+
 def label_to_onehot(label, length):
     """
     Convert a label to a one-hot encoded vector
@@ -118,6 +247,7 @@ def label_to_onehot(label, length):
     onehot[label, 0] = 1
     return onehot
 
+
 def accuracy(Y_pred, Y_true):
     """
     Calculate the accuracy of the predictions
@@ -134,6 +264,7 @@ def accuracy(Y_pred, Y_true):
     acc = np.mean(Y_pred == Y_true)
 
     return acc
+
 
 def precision(Y_pred, Y_true):
     """
