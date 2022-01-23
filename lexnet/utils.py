@@ -51,13 +51,13 @@ def cross_entropy_loss(Y, Y_hat):
     Returns
     C (float): mean squared loss for the true and predicted outputs
     """
-    C = -(Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat)).sum(axis=0).mean()
+    C = np.sum(-np.nan_to_num(Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat)), axis=0).mean()
     return C
 
 
 def dcross_entropy_loss(Y, Y_hat):
     """
-    Derivative of the cross-entropy loss with respesct to the 
+    Derivative of the cross-entropy loss with respect to the 
     prediction variable
 
     Args
@@ -69,7 +69,12 @@ def dcross_entropy_loss(Y, Y_hat):
     Returns
     dC (np.array): the derivative of the mean squared loss function w.r.t. Y_hat
     """
-    dC = (Y_hat - Y)
+    # to avoid division by zero
+    epsilon = 0.001
+
+    dC_num = Y_hat - Y
+    dC_denom = Y_hat * (1 - Y_hat) + epsilon
+    dC = (dC_num / dC_denom).mean(axis=1).reshape(-1, 1)
     return dC
 
 
@@ -111,9 +116,50 @@ def dms_loss(Y, Y_hat):
     return dC
 
 
+def dloss_function_mapping(loss_function_name):
+    """
+    Calculate the derivative of the loss function with respect to the
+    output activation value
+
+    Args
+    loss_function_name (str): the loss function to calculate derivative of
+        options are:
+        'ms_loss'
+        'ce_loss'
+
+    Return
+    dloss_fn (func): the derivative of loss_function
+    """
+    mapping = {'ms_loss': dms_loss, 'ce_loss': dcross_entropy_loss}
+    dloss_fn = mapping[loss_function_name]
+    return dloss_fn
+
+
+def loss_function_mapping(loss_function_name):
+    """
+    Given the string describing the loss function, return
+    the actual loss function corresponding to it
+
+    Args
+    loss_function_name (str): the loss function to calculate derivative of
+        options are:
+        'ms_loss'
+        'ce_loss'
+
+    Return
+    loss_fn (func): the actual loss function
+    """
+    mapping = {'ms_loss': ms_loss, 'ce_loss': cross_entropy_loss}
+    loss_fn = mapping[loss_function_name]
+    return loss_fn
+
+
 def delta(Y, A_final, Z_final, activation, dloss):
     """
-    Calculate the 'error in the output neuron' for mean square loss
+    Calculate the 'error in the output neuron' for a given loss function
+    and activation. This is used in the recursion of the backprop 
+    algorithm to calculate the derivatives of the cost function
+    with respect to the weights and biases
 
     Args:
     Y (np.array of shape (num_output_features, num_examples)): 
@@ -131,7 +177,6 @@ def delta(Y, A_final, Z_final, activation, dloss):
     delta (np.array of shape (num)output_features, num_examples )): 
         mean squared loss for the true and predicted outputs
     """
-
     delta = dloss(Y, A_final) * activation(Z_final)
     return delta
 
@@ -154,7 +199,6 @@ def delta_final_ms(Y, A_final, Z_final, activation):
     delta (np.array of shape (num)output_features, num_examples )): 
         mean squared loss for the true and predicted outputs
     """
-
     delta = dms_loss(Y, A_final) * activation(Z_final)
     return delta
 
