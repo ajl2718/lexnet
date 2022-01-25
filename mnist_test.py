@@ -30,12 +30,12 @@ Y_train = np.concatenate([label_to_onehot(label, 10) for label in y_train], axis
 Y_test = np.concatenate([label_to_onehot(label, 10) for label in y_test], axis=1)
 
 # neural network hyper parameters
-layers = [784, 30, 10]
+layers = [784, 32, 10]
 activations = [sigmoid, sigmoid, sigmoid]
 net1 = Net(layers, activations, 'ce_loss')
-num_epochs = 16
-batch_size = 32
-epsilon = 0.5
+num_epochs = 32
+batch_size = 64
+epsilon = 5e-4
 
 # gradient descent on the neural net
 losses = net1.train([X_train, X_test], [Y_train, Y_test], num_epochs, batch_size, epsilon)
