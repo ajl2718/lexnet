@@ -38,7 +38,7 @@ def drelu(x):
     return result
     
 
-def cross_entropy_loss(Y, Y_hat):
+def cross_entropy_loss(Y, Y_hat, epsilon=0.01):
     """
     Cross-entropy loss of a batch of values
 
@@ -47,11 +47,13 @@ def cross_entropy_loss(Y, Y_hat):
         correct output value one-hot encoded array of shape (output_dim, num_samples)
     Y_hat (np.array of shape (num_output_features, num_examples)): 
         predicted output value array of shape (output_dim, num_samples)
+    epsilon (float): offset in the logs to avoid getting inf values
 
     Returns
     C (float): mean squared loss for the true and predicted outputs
     """
-    C = np.sum(-np.nan_to_num(Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat)), axis=0).mean()
+    # getting inf values. Why? case where Y_hat = 0 and Y = 1 or Y_hat = 1 and Y = 0
+    C = np.nan_to_num(-Y * np.log(Y_hat + epsilon) - (1 - Y) * np.log(1 - Y_hat + epsilon)).sum(axis=0).mean()
     return C
 
 
