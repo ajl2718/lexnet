@@ -3,15 +3,26 @@ from .utils import sigmoid, dsigmoid, relu
 from .utils import ms_loss, dms_loss
 from tqdm import tqdm
 from .utils import accuracy
+from .utils import loss_function_mapping, dloss_function_mapping
 
 class Net():
     """
     Implements a sequence of fully-connected
     neural net layers
     """
-    def __init__(self, layers, activations):
+    def __init__(self, layers, activations, loss_function_name='ce_loss'):
+        """
+        Initialize the fullyconnected neural network with a given set of 
+        layers, activations and loss function
+
+        Args
+        layers (list of int): the number of neurons in each layer
+        activations (list of func): the activation functions for each layer
+        loss_function (str): name of function used to calculate the loss ('ce_loss', 'ms_loss')
+        """
         self.layers = layers
         self.activations = activations
+        self.loss_function_name = loss_function_name
 
         weights = []
         biases = []
@@ -87,14 +98,18 @@ class Net():
         # neural network parameters
         weights = self.weights 
         biases = self.biases
-
+        loss_function_name = self.loss_function_name
+        
         # feedforward step
         z_layers, a_layers = self.feedforward(X)
 
         # calculate the deltas
         # initial delta (from the output layer)
         # assumes particular loss function and activations. To do: generalise
-        delta_final = dms_loss(Y, a_layers[-1]) * dsigmoid(z_layers[-1])
+        if loss_function_name == 'ce_loss':
+            delta_final = a_layers[-1] - Y
+        elif loss_function_name == 'ms_loss':
+            delta_final =  (a_layers[-1] - Y)*dsigmoid(z_layers[-1])
         delta_old = delta_final
 
         # calculate the initial derivatives w.r.t W and b
@@ -139,6 +154,8 @@ class Net():
         train_accuracies = []
         test_accuracies = []
 
+        loss_function = loss_function_mapping(self.loss_function_name)
+
         if isinstance(X, list):
             X_train, X_test = X 
             Y_train, Y_test = Y
@@ -164,7 +181,7 @@ class Net():
             # calculate the loss
             # model predictions and loss
             Y_preds = self.predict(X_train)
-            loss = ms_loss(Y_preds, Y_train)
+            loss = loss_function(Y_train, Y_preds)
             y_hat = np.argmax(Y_preds, axis=0).reshape(-1, 1)
             y = np.argmax(Y_train, axis=0).reshape(-1, 1)
             train_accuracy = accuracy(y_hat, y)
@@ -172,7 +189,7 @@ class Net():
             train_losses.append(loss)
 
             Y_preds = self.predict(X_test)
-            loss = ms_loss(Y_preds, Y_test)
+            loss = loss_function(Y_test, Y_preds)
             y_hat = np.argmax(Y_preds, axis=0).reshape(-1, 1)
             y = np.argmax(Y_test, axis=0).reshape(-1, 1)
             test_accuracy = accuracy(y_hat, y)
