@@ -1,5 +1,19 @@
 import numpy as np 
 
+def num_to_np(x):
+    """
+    Ensure that x is a np.array
+    """
+    # if float convert to np.array
+    if isinstance(x, float) or isinstance(x, int):
+        x = np.array([x]).reshape(1, -1)
+    elif isinstance(x, list):
+        x = np.array(x)
+    if len(x.shape) == 1:
+        x = x.reshape(1, -1)
+    return x 
+
+
 def sigmoid(x):
     """
     Sigmoid activation
@@ -18,11 +32,20 @@ def relu(x):
     """
     Rectified linear unit activation
     """
+    x = num_to_np(x)
     result = np.zeros(x.shape)
     index_pos0, index_pos1 = np.where(x >= 0)
-    index_neg0, index_neg0 = np.where(x < 0)
+    index_neg0, index_neg1 = np.where(x < 0)
     result[index_pos0, index_pos1] = x[index_pos0, index_pos1]
     result[index_neg0, index_neg1] = 0
+    return result
+
+
+def softmax(x):
+    """
+    Sofmax layer
+    """
+    result = np.exp(x) / np.sum(np.exp(x))
     return result
 
 
@@ -30,6 +53,7 @@ def drelu(x):
     """
     Derivative of the relu activation
     """
+    x = num_to_np(x)
     result = np.zeros(x.shape)
     index_pos0, index_pos1 = np.where(x >= 0)
     index_neg0, index_neg0 = np.where(x < 0)
